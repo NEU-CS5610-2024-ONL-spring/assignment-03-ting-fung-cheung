@@ -2,8 +2,6 @@ import React from "react";
 import * as ReactDOMClient from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
-import Todos from "./components/Todos";
-import TodoDetail from "./components/TodoDetail";
 import Profile from "./components/Profile";
 import NotFound from "./components/NotFound";
 import Home from "./components/Home";
@@ -15,12 +13,11 @@ import "./style/normalize.css";
 import "./style/index.css";
 
 const container = document.getElementById("root");
-
-const requestedScopes = ["profile", "email"];
+const requestedScopes = ["profile", "email", "read:notes", "write:notes"];
 
 function RequireAuth({ children }) {
   const { isAuthenticated, isLoading } = useAuth0();
-
+  
   // If the user is not authenticated, redirect to the home page
   if (!isLoading && !isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -31,7 +28,6 @@ function RequireAuth({ children }) {
 }
 
 const root = ReactDOMClient.createRoot(container);
-
 root.render(
   <React.StrictMode>
     <Auth0Provider
@@ -57,8 +53,6 @@ root.render(
               }
             >
               <Route index element={<Profile />} />
-              <Route path="todos" element={<Todos />} />
-              <Route path="todos/:todoId" element={<TodoDetail />} />
               <Route path="debugger" element={<AuthDebugger />} />
             </Route>
             <Route path="*" element={<NotFound />} />
