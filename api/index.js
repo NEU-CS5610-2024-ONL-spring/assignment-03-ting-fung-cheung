@@ -29,7 +29,7 @@ app.get("/ping", (req, res) => {
 });
 
 // requireAuth middleware will validate the access token sent by the client and will return the user information within req.auth
-app.get("/todos", requireAuth, async (req, res) => {
+app.get("/notes", requireAuth, async (req, res) => {
   const auth0Id = req.auth.payload.sub;
 
   const user = await prisma.user.findUnique({
@@ -38,70 +38,72 @@ app.get("/todos", requireAuth, async (req, res) => {
     },
   });
 
-  const todos = await prisma.todoItem.findMany({
+  const notes = await prisma.note.findMany({
     where: {
-      userId: user.id,
+      authorId: user.id,
     },
   });
 
-  res.json(todos);
+  res.json(notes);
 });
 
-// creates a todo item
-app.post("/todos", requireAuth, async (req, res) => {
+// creates a note
+app.post("/notes", requireAuth, async (req, res) => {
   const auth0Id = req.auth.payload.sub;
 
-  const { title } = req.body;
+  const { title, content } = req.body;
 
-  if (!title) {
-    res.status(400).send("title is required");
+  if (!title || !content) {
+    res.status(400).send("title and content are required");
   } else {
-    const newItem = await prisma.todoItem.create({
+    const newNote = await prisma.note.create({
       data: {
         title,
-        user: { connect: { auth0Id } },
+        content,
+        author: { connect: { auth0Id } },
       },
     });
 
-    res.status(201).json(newItem);
+    res.status(201).json(newNote);
   }
 });
 
-// deletes a todo item by id
-app.delete("/todos/:id", requireAuth, async (req, res) => {
+// deletes a note by id
+app.delete("/notes/:id", requireAuth, async (req, res) => {
   const id = req.params.id;
-  const deletedItem = await prisma.todoItem.delete({
+  const deletedNote = await prisma.note.delete({
     where: {
-      id,
+      id: parseInt(id),
     },
   });
-  res.json(deletedItem);
+  res.json(deletedNote);
 });
 
-// get a todo item by id
-app.get("/todos/:id", requireAuth, async (req, res) => {
+// get a note by id
+app.get("/notes/:id", requireAuth, async (req, res) => {
   const id = req.params.id;
-  const todoItem = await prisma.todoItem.findUnique({
+  const note = await prisma.note.findUnique({
     where: {
-      id,
+      id: parseInt(id),
     },
   });
-  res.json(todoItem);
+  res.json(note);
 });
 
-// updates a todo item by id
-app.put("/todos/:id", requireAuth, async (req, res) => {
+// updates a note by id
+app.put("/notes/:id", requireAuth, async (req, res) => {
   const id = req.params.id;
-  const { title } = req.body;
-  const updatedItem = await prisma.todoItem.update({
+  const { title, content } = req.body;
+  const updatedNote = await prisma.note.update({
     where: {
-      id,
+      id: parseInt(id),
     },
     data: {
       title,
+      content,
     },
   });
-  res.json(updatedItem);
+  res.json(updatedNote);
 });
 
 // get Profile information of authenticated user
@@ -138,7 +140,8 @@ app.post("/verify-user", requireAuth, async (req, res) => {
       data: {
         email,
         auth0Id,
-        name,
+        username: name,
+        password: "",
       },
     });
 
